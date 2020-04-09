@@ -1,3 +1,40 @@
+def minimax(marked,move,val):
+    #if move==1 then minimises
+    wn,winner=win(marked)
+    if wn:
+        if winner==0:
+            return val
+        else:
+            return -val
+    elif wn==-1 and len(marked)==9:
+        return 0
+
+    scores=[]
+    for i in range(3):
+        for j in range(3):
+            if (i,j) not in marked:
+                marked[(i,j)]=move
+                scores.append(minimax(marked,abs(move-1),val-1))
+                del marked[(i,j)]
+    #print(scores)
+
+    if len(scores)==0:
+        return 0
+    return min(scores) if move else max(scores)
+
+def ai(marked):
+    best_score=-10
+    for i in range(3):
+        for j in range(3):
+            if (i,j) not in marked:
+                marked[(i,j)]=0
+                score=minimax(marked,1,10)
+                if score>best_score:
+                    best_score=score
+                    move=(i,j)
+                del marked[(i,j)]
+    return move
+
 def win(marked):
     #check rows
     for i in range(3):
@@ -39,7 +76,6 @@ while not game_over:
         setup()
         new_game=0
         marked={}
-        chance=1
     for x in pg.event.get():
         if x.type == pg.QUIT:
             game_over = True
@@ -48,23 +84,48 @@ while not game_over:
             pos0,pos1=pg.mouse.get_pos()
             idx=(pos0//200,pos1//100)
             if idx not in marked:
-                marked[idx]=chance
-                if chance:
-                    dis.blit(text1,(idx[0]*200+70,idx[1]*100))
-                else:
-                    dis.blit(text,(idx[0]*200+70,idx[1]*100))
-                chance=abs(chance-1)
-        if len(marked)>0:
+                marked[idx]=1
+                dis.blit(text1,(idx[0]*200+70,idx[1]*100))
+                pg.display.update()
+            else:
+                continue
+            if len(marked)==9:
+                new_game=1
+                pg.time.wait(1000)
+                break
             check,winner=win(marked)
             if check:
-                print(check,winner)
-                text2=font.render("Winner"+" "+str(winner),True,(255,0,0))
+                pg.time.wait(1000)
+                if winner:
+                    text2=font.render("Winner: O",True,(255,0,0))
+                else:
+                    text2=font.render("Winner: X",True,(255,0,0))
                 dis.fill((0,0,0))
-                pg.display.update()
                 dis.blit(text2,(150,100))
                 pg.display.update()
                 new_game=1
                 pg.time.wait(2000)
+                break
+            move=ai(marked)
+            marked[move]=0
+            dis.blit(text,(move[0]*200+70,move[1]*100))
+            pg.display.update()
+            if len(marked)==9:
+                new_game=1
+                break
+            check,winner=win(marked)
+            if check:
+                pg.time.wait(1000)
+                if winner:
+                    text2=font.render("Winner: O",True,(255,0,0))
+                else:
+                    text2=font.render("Winner: X",True,(255,0,0))
+                dis.fill((0,0,0))
+                dis.blit(text2,(150,100))
+                pg.display.update()
+                new_game=1
+                pg.time.wait(2000)
+                break
         pg.display.update()
 pg.quit()
 quit()
